@@ -294,7 +294,7 @@
 <body>
 <div id="game-container">
   <div id="hud-top">
-    <span><span class="hud-label">DEPTH </span><span class="hud-value" id="hud-depth">-200m</span></span>
+    <span><span class="hud-label">WAVE </span><span class="hud-value" id="hud-wave">1/11</span></span>
     <span><span class="hud-label">PINGS </span><span class="hud-value" id="hud-pings">5</span></span>
     <span><span class="hud-label">HULL </span><span class="hud-value" id="hud-hull">███████████</span></span>
     <span><span class="hud-label">TORP </span><span class="hud-value" id="hud-torp">●●●</span></span>
@@ -307,7 +307,7 @@
 
   <div id="hud-bottom">
     <span class="hud-label desktop-hint">
-      <kbd>WASD</kbd> MOVE &nbsp; <kbd>SPACE</kbd> PING &nbsp; <kbd>F</kbd> TORPEDO
+      <kbd>WASD</kbd> MOVE &nbsp; <kbd>SPACE</kbd> PING &nbsp; <kbd>Q</kbd><kbd>E</kbd> AIM &nbsp; <kbd>F</kbd> FIRE
     </span>
   </div>
 
@@ -325,44 +325,59 @@
     </div>
     <div class="action-buttons">
       <div class="action-btn ping-btn" id="btn-ping">PING</div>
+      <div class="action-btn torpedo-btn" id="btn-aim">AIM</div>
       <div class="action-btn torpedo-btn" id="btn-torpedo">FIRE</div>
     </div>
   </div>
 
   <!-- Title screen -->
   <div class="screen-overlay" id="screen-title">
+    <div class="hud-label" style="font-size:clamp(9px,2vw,12px);letter-spacing:3px;margin-bottom:8px">&#9733; UNITED STATES DEPARTMENT OF WAR &#9733;</div>
     <div class="title">UNDERTOW</div>
+    <div class="hud-label" style="font-size:clamp(9px,2vw,12px);letter-spacing:4px;margin-bottom:20px">CLASSIFIED // EYES ONLY // WWIII THEATER OPS</div>
     <div class="subtitle">
-      You are blind beneath the waves.<br>
-      Ping to see. But every ping reveals you.
+      Commander, the war beneath the surface has begun.<br><br>
+      You have been assigned to the <span style="color:var(--green)">USS IRON PHANTOM</span>,<br>
+      a deep-strike stealth submarine deployed behind enemy lines.<br><br>
+      Your sonar is your only eye. Each ping reveals the abyss &mdash;<br>
+      but it also reveals <span style="color:var(--red)">you</span>.<br><br>
+      Navigate hostile waters. Eliminate enemy wolfpacks.<br>
+      Reach extraction alive. That is your only order.
     </div>
-    <div class="prompt" id="start-prompt">[ TAP OR PRESS ENTER ]</div>
+    <div class="prompt" id="start-prompt">[ REPORT FOR DUTY ]</div>
     <div class="instructions">
-      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &mdash;
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> navigate &mdash;
       <kbd>SPACE</kbd> sonar ping &mdash;
-      <kbd>F</kbd> torpedo<br>
-      Reach the extraction point. Avoid detection.<br>
-      Pings recharge over time. Torpedoes are limited.
+      <kbd>Q</kbd><kbd>E</kbd> aim &mdash; <kbd>F</kbd> fire torpedo<br>
+      Survive 11 waves. The sea gets darker with each one.
     </div>
   </div>
 
   <!-- Game over screen -->
   <div class="screen-overlay hidden" id="screen-gameover">
     <div class="title" style="color:var(--red);text-shadow:0 0 20px var(--red)">LOST AT SEA</div>
-    <div class="stats-line">DEPTH REACHED: <span class="val" id="stat-depth">0m</span></div>
+    <div class="subtitle" style="color:var(--red)">The USS IRON PHANTOM has been destroyed.</div>
+    <div class="stats-line">WAVE REACHED: <span class="val" id="stat-wave">1</span> / 11</div>
     <div class="stats-line">ENEMIES DESTROYED: <span class="val" id="stat-kills">0</span></div>
     <div class="stats-line">FINAL SCORE: <span class="val" id="stat-score">0</span></div>
     <div class="prompt" style="margin-top:25px">[ TAP OR PRESS ENTER ]</div>
   </div>
 
-  <!-- Win screen -->
-  <div class="screen-overlay hidden" id="screen-win">
-    <div class="title" style="color:var(--amber);text-shadow:0 0 20px var(--amber)">SURFACED</div>
-    <div class="subtitle">You reached the extraction point.</div>
-    <div class="stats-line">ENEMIES DESTROYED: <span class="val" id="stat-kills-w">0</span></div>
-    <div class="stats-line">PINGS USED: <span class="val" id="stat-pings-w">0</span></div>
-    <div class="stats-line">FINAL SCORE: <span class="val" id="stat-score-w">0</span></div>
-    <div class="prompt" style="margin-top:25px">[ TAP OR PRESS ENTER ]</div>
+  <!-- Final victory screen -->
+  <div class="screen-overlay hidden" id="screen-victory">
+    <div class="hud-label" style="font-size:clamp(9px,2vw,12px);letter-spacing:3px;margin-bottom:8px">&#9733; DEPARTMENT OF WAR &mdash; PRIORITY DISPATCH &#9733;</div>
+    <div class="title" style="color:var(--amber);text-shadow:0 0 30px var(--amber),0 0 60px rgba(255,176,0,0.3)">YOU RULED THE SEA</div>
+    <div class="subtitle">
+      Commander, against all odds, the <span style="color:var(--green)">USS IRON PHANTOM</span><br>
+      has survived all 11 waves of the enemy wolfpack offensive.<br><br>
+      The subsurface theater of World War III is ours.<br>
+      The seas belong to you.<br><br>
+      <span style="color:var(--amber)">The President sends his regards.</span>
+    </div>
+    <div class="stats-line">TOTAL KILLS: <span class="val" id="stat-kills-v">0</span></div>
+    <div class="stats-line">TOTAL PINGS: <span class="val" id="stat-pings-v">0</span></div>
+    <div class="stats-line">FINAL SCORE: <span class="val" id="stat-score-v">0</span></div>
+    <div class="prompt" style="margin-top:25px">[ RETURN TO PORT ]</div>
   </div>
 </div>
 
@@ -528,7 +543,37 @@ const Audio = (() => {
     });
   };
 
-  return { init, ping, enemyPing, torpedo, explosion, hit, ambient, move, win };
+  const heal = () => {
+    const c = init();
+    const now = c.currentTime;
+    [600, 800, 1000].forEach((f, i) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.15, now + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.2);
+      osc.connect(g).connect(c.destination);
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.25);
+    });
+  };
+
+  const aimClick = () => {
+    const c = init();
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 800;
+    g.gain.setValueAtTime(0.08, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(g).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.06);
+  };
+
+  return { init, ping, enemyPing, torpedo, explosion, hit, ambient, move, win, heal, aimClick };
 })();
 
 // ===== GAME ENGINE =====
@@ -536,7 +581,7 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
 // Game constants
-const TILE = { EMPTY: 0, WALL: 1, DEEP: 2, EXIT: 3 };
+const TILE = { EMPTY: 0, WALL: 1, DEEP: 2, EXIT: 3, REPAIR: 4 };
 const CHAR_WALL = ['#', '█', '▓', '▒'];
 const CHAR_DEEP = ['~', '≈', '∽'];
 const CHAR_EMPTY = ['.', ' ', ' ', ' ', ' '];
@@ -544,9 +589,10 @@ const CHAR_SUB = '◆';
 const CHAR_ENEMY = '▼';
 const CHAR_TORPEDO = '•';
 const CHAR_EXIT = '◎';
+const CHAR_REPAIR = '+';
 
 let COLS, ROWS, CELL_W, CELL_H;
-let gameState = 'title'; // title, playing, gameover, win
+let gameState = 'title'; // title, playing, waveclear, gameover, win, victory
 let ambientSound = null;
 
 // Game state
@@ -554,6 +600,9 @@ let world, player, enemies, torpedoes, particles, pings;
 let pingRechargeTimer, totalPingsUsed, enemyKills, score, level;
 let revealMap; // 2D array: visibility (0-1) for each cell
 let alertLevel; // how much enemies know about player position
+let waveClearTimer = 0; // countdown after all enemies killed
+const WAVE_CLEAR_DELAY = 10000; // 10 seconds between waves
+const REPAIR_HEAL = 30; // hull points restored per kit
 
 const MAX_PINGS = 5;
 const PING_RECHARGE_TIME = 4000; // ms
@@ -562,8 +611,27 @@ const PING_EXPAND_SPEED = 0.15; // cells per frame
 const VISIBILITY_DECAY = 0.003;
 const PLAYER_MOVE_DELAY = 150; // ms
 const ENEMY_MOVE_DELAY = 800;
-const TORPEDO_SPEED = 200; // ms per cell
-const MAX_TORPEDOES = 3;
+const TORPEDO_SPEED = 120; // ms per step (faster)
+const MAX_TORPEDOES = 5;
+const TORPEDO_RELOAD_TIME = 3000; // ms to reload one torpedo
+const TORPEDO_RANGE = 25; // max cells before fizzle
+const TORPEDO_HOMING_RANGE = 4; // how far sideways it can detect enemies
+const TORPEDO_HOMING_STRENGTH = 0.3; // how much it curves per step (0-1)
+const TORPEDO_HIT_RADIUS = 1.5; // proximity to count as hit
+
+// 8 aim directions: E, SE, S, SW, W, NW, N, NE
+const AIM_DIRS = [
+  { dx: 1, dy: 0 },   // E  →
+  { dx: 1, dy: 1 },   // SE ↘
+  { dx: 0, dy: 1 },   // S  ↓
+  { dx: -1, dy: 1 },  // SW ↙
+  { dx: -1, dy: 0 },  // W  ←
+  { dx: -1, dy: -1 }, // NW ↖
+  { dx: 0, dy: -1 },  // N  ↑
+  { dx: 1, dy: -1 },  // NE ↗
+];
+const AIM_ARROWS = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'];
+const AIM_RETICLE_CHARS = ['─', '╲', '│', '╱', '─', '╲', '│', '╱'];
 
 function resize() {
   const wrap = document.getElementById('canvas-wrap');
@@ -653,6 +721,55 @@ function findOpenSpot(map, preferRight) {
   return { x: 3, y: 3 };
 }
 
+function spawnEnemies() {
+  enemies = [];
+  const numEnemies = Math.min(2 + level, 12);
+  const px = player ? player.x : 3;
+  const py = player ? player.y : 3;
+  for (let i = 0; i < numEnemies; i++) {
+    let pos;
+    for (let a = 0; a < 200; a++) {
+      const tx = Math.floor(Math.random() * (COLS - 6)) + 3;
+      const ty = Math.floor(Math.random() * (ROWS - 4)) + 2;
+      if (world[ty][tx] === TILE.EMPTY || world[ty][tx] === TILE.DEEP) {
+        const dist = Math.abs(tx - px) + Math.abs(ty - py);
+        if (dist > 12) { pos = { x: tx, y: ty }; break; }
+      }
+    }
+    if (pos) {
+      enemies.push({
+        x: pos.x, y: pos.y,
+        lastMove: 0,
+        patrol: Math.random() < 0.5 ? 'h' : 'v',
+        patrolDir: 1,
+        alert: 0,
+        alertX: 0, alertY: 0,
+        alive: true,
+        pingTimer: 0,
+        lastPing: 0,
+        torpedoes: MAX_TORPEDOES,
+        torpReloadTimer: 0
+      });
+    }
+  }
+}
+
+function spawnRepairKits() {
+  const px = player ? player.x : 3;
+  const py = player ? player.y : 3;
+  const numRepairs = 2 + (level >= 5 ? 1 : 0);
+  for (let r = 0; r < numRepairs; r++) {
+    for (let a = 0; a < 100; a++) {
+      const rx = Math.floor(Math.random() * (COLS - 6)) + 3;
+      const ry = Math.floor(Math.random() * (ROWS - 4)) + 2;
+      if (world[ry][rx] === TILE.EMPTY) {
+        const pdist = Math.abs(rx - px) + Math.abs(ry - py);
+        if (pdist > 5) { world[ry][rx] = TILE.REPAIR; break; }
+      }
+    }
+  }
+}
+
 function initGame() {
   resize();
   world = generateMap();
@@ -673,43 +790,16 @@ function initGame() {
     torpedoes: MAX_TORPEDOES,
     lastMove: 0,
     detected: false,
-    detectedTimer: 0
+    detectedTimer: 0,
+    aimDir: 0, // index into AIM_DIRS (starts East)
+    torpReloadTimer: 0
   };
 
   // Reveal around player initially
   revealArea(player.x, player.y, 3, 1);
 
-  // Exit on right side
-  const ePos = findOpenSpot(world, true);
-  world[ePos.y][ePos.x] = TILE.EXIT;
-
-  // Enemies
-  enemies = [];
-  const numEnemies = Math.min(3 + level, 8);
-  for (let i = 0; i < numEnemies; i++) {
-    let pos;
-    for (let a = 0; a < 100; a++) {
-      const tx = Math.floor(Math.random() * (COLS - 6)) + 3;
-      const ty = Math.floor(Math.random() * (ROWS - 4)) + 2;
-      if (world[ty][tx] === TILE.EMPTY || world[ty][tx] === TILE.DEEP) {
-        const dist = Math.abs(tx - player.x) + Math.abs(ty - player.y);
-        if (dist > 10) { pos = { x: tx, y: ty }; break; }
-      }
-    }
-    if (pos) {
-      enemies.push({
-        x: pos.x, y: pos.y,
-        lastMove: 0,
-        patrol: Math.random() < 0.5 ? 'h' : 'v',
-        patrolDir: 1,
-        alert: 0,
-        alertX: 0, alertY: 0,
-        alive: true,
-        pingTimer: 0,
-        lastPing: 0
-      });
-    }
-  }
+  spawnRepairKits();
+  spawnEnemies();
 
   torpedoes = [];
   particles = [];
@@ -717,8 +807,34 @@ function initGame() {
   pingRechargeTimer = 0;
   totalPingsUsed = 0;
   alertLevel = 0;
+  waveClearTimer = 0;
 
   if (!ambientSound) ambientSound = Audio.ambient();
+}
+
+// Start a new wave on the existing map — keep player position, keep map
+function startNewWave() {
+  // Clear old repair kits from map
+  for (let y = 0; y < ROWS; y++)
+    for (let x = 0; x < COLS; x++)
+      if (world[y][x] === TILE.REPAIR) world[y][x] = TILE.EMPTY;
+
+  spawnRepairKits();
+  spawnEnemies();
+
+  // Reset transient state but keep player, map, score, etc.
+  torpedoes = [];
+  particles = [];
+  pings = [];
+  alertLevel = 0;
+  waveClearTimer = 0;
+  player.detected = false;
+  player.pings = MAX_PINGS;
+  player.torpedoes = MAX_TORPEDOES;
+  player.torpReloadTimer = 0;
+
+  // Reveal around current player position
+  revealArea(player.x, player.y, 3, 1);
 }
 
 // ===== PING SYSTEM =====
@@ -767,34 +883,54 @@ function doPing(fromX, fromY, isEnemy) {
   }
 }
 
-function fireTorpedo(dx, dy) {
+function fireTorpedo() {
   if (player.torpedoes <= 0) return;
   player.torpedoes--;
   Audio.torpedo();
+  const dir = AIM_DIRS[player.aimDir];
   torpedoes.push({
-    x: player.x, y: player.y,
-    dx, dy,
+    x: player.x + 0.5, y: player.y + 0.5, // center of cell (float coords)
+    dx: dir.dx, dy: dir.dy,
     lastMove: performance.now(),
     fromPlayer: true,
-    alive: true
+    alive: true,
+    traveled: 0,
+    trail: []
   });
   // Firing also reveals position
   alertLevel = Math.min(alertLevel + 20, 100);
 }
 
+function getLockedEnemy() {
+  // Check if any alive enemy is roughly in the aim direction
+  const dir = AIM_DIRS[player.aimDir];
+  let best = null, bestDist = Infinity;
+  enemies.forEach(e => {
+    if (!e.alive) return;
+    const edx = e.x - player.x, edy = e.y - player.y;
+    const dist = Math.sqrt(edx * edx + edy * edy);
+    if (dist > TORPEDO_RANGE || dist < 1) return;
+    // Dot product to check if enemy is in front
+    const dot = edx * dir.dx + edy * dir.dy;
+    if (dot <= 0) return; // behind us
+    // Cross product for lateral distance
+    const cross = Math.abs(edx * dir.dy - edy * dir.dx);
+    if (cross < TORPEDO_HOMING_RANGE + dist * 0.15) { // wider cone at distance
+      if (dist < bestDist) { bestDist = dist; best = e; }
+    }
+  });
+  return best;
+}
+
 // ===== INPUT =====
 const keys = {};
-let lastDir = { dx: 1, dy: 0 };
 
 document.addEventListener('keydown', e => {
   if (gameState === 'title') {
     if (e.key === 'Enter' || e.key === ' ') { startGame(); return; }
   }
-  if (gameState === 'gameover') {
+  if (gameState === 'gameover' || gameState === 'victory') {
     if (e.key === 'Enter' || e.key === ' ') { showTitle(); return; }
-  }
-  if (gameState === 'win') {
-    if (e.key === 'Enter' || e.key === ' ') { nextLevel(); return; }
   }
   if (gameState !== 'playing') return;
 
@@ -804,8 +940,16 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     if (player.pings > 0) doPing(player.x, player.y, false);
   }
+  if (e.key === 'q' || e.key === 'Q') {
+    player.aimDir = (player.aimDir + 7) % 8;
+    Audio.aimClick();
+  }
+  if (e.key === 'e' || e.key === 'E') {
+    player.aimDir = (player.aimDir + 1) % 8;
+    Audio.aimClick();
+  }
   if (e.key === 'f' || e.key === 'F') {
-    fireTorpedo(lastDir.dx, lastDir.dy);
+    fireTorpedo();
   }
 });
 
@@ -829,7 +973,10 @@ function setupMobile() {
     if (dir === 'left') dx = -1;
     if (dir === 'right') dx = 1;
     if (dx || dy) {
-      lastDir = { dx, dy };
+      // Also snap aim to movement direction
+      for (let i = 0; i < 8; i++) {
+        if (AIM_DIRS[i].dx === dx && AIM_DIRS[i].dy === dy) { player.aimDir = i; break; }
+      }
       movePlayer(dx, dy, now);
     }
   };
@@ -866,21 +1013,28 @@ function setupMobile() {
     e.preventDefault();
     Audio.init();
     if (gameState === 'title') { startGame(); return; }
-    if (gameState === 'gameover') { showTitle(); return; }
-    if (gameState === 'win') { nextLevel(); return; }
+    if (gameState === 'gameover' || gameState === 'victory') { showTitle(); return; }
     if (gameState === 'playing' && player.pings > 0) doPing(player.x, player.y, false);
+  });
+
+  document.getElementById('btn-aim').addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (gameState === 'playing') {
+      player.aimDir = (player.aimDir + 1) % 8;
+      Audio.aimClick();
+    }
   });
 
   document.getElementById('btn-torpedo').addEventListener('touchstart', e => {
     e.preventDefault();
-    if (gameState === 'playing') fireTorpedo(lastDir.dx, lastDir.dy);
+    if (gameState === 'playing') fireTorpedo();
   });
 }
 
 // Title screen tap
 document.getElementById('screen-title').addEventListener('click', () => startGame());
 document.getElementById('screen-gameover').addEventListener('click', () => showTitle());
-document.getElementById('screen-win').addEventListener('click', () => nextLevel());
+document.getElementById('screen-victory').addEventListener('click', () => showTitle());
 
 function movePlayer(dx, dy, now) {
   const nx = player.x + dx, ny = player.y + dy;
@@ -895,10 +1049,36 @@ function movePlayer(dx, dy, now) {
   // Reveal immediate surroundings faintly
   revealArea(nx, ny, 1, 0.3);
 
-  // Check exit
-  if (world[ny][nx] === TILE.EXIT) {
-    winGame();
+  // Pickup repair kit
+  if (world[ny][nx] === TILE.REPAIR) {
+    world[ny][nx] = TILE.EMPTY;
+    const oldHull = player.hull;
+    player.hull = Math.min(100, player.hull + REPAIR_HEAL);
+    Audio.heal();
+    particles.push(...createExplosion(nx, ny, 'heal'));
   }
+}
+
+const MAX_WAVES = 11; // waves 1-11 → enemies 2-12
+
+const WAVE_NAMES = [
+  'SILENT APPROACH',
+  'FIRST CONTACT',
+  'DEEP STALKERS',
+  'WOLFPACK RISING',
+  'BLIND HUNT',
+  'PRESSURE POINT',
+  'KILL BOX',
+  'IRON COFFIN',
+  'THE ABYSS',
+  'DEAD RECKONING',
+  'TOTAL WAR'
+];
+
+function hideAllScreens() {
+  ['screen-title', 'screen-gameover', 'screen-victory'].forEach(id =>
+    document.getElementById(id).classList.add('hidden')
+  );
 }
 
 // ===== GAME LOOP =====
@@ -910,43 +1090,24 @@ function startGame() {
   totalPingsUsed = 0;
   initGame();
   gameState = 'playing';
-  document.getElementById('screen-title').classList.add('hidden');
-  document.getElementById('screen-gameover').classList.add('hidden');
-  document.getElementById('screen-win').classList.add('hidden');
+  hideAllScreens();
 }
 
 function showTitle() {
   gameState = 'title';
+  hideAllScreens();
   document.getElementById('screen-title').classList.remove('hidden');
-  document.getElementById('screen-gameover').classList.add('hidden');
-  document.getElementById('screen-win').classList.add('hidden');
 }
 
 function gameOver() {
   gameState = 'gameover';
   Audio.explosion();
-  document.getElementById('stat-depth').textContent = `-${200 + level * 100}m`;
+  document.getElementById('stat-wave').textContent = `${level + 1}`;
   document.getElementById('stat-kills').textContent = enemyKills;
   document.getElementById('stat-score').textContent = score;
   document.getElementById('screen-gameover').classList.remove('hidden');
 }
 
-function winGame() {
-  score += 500 + player.hull * 5;
-  gameState = 'win';
-  Audio.win();
-  level++;
-  document.getElementById('stat-kills-w').textContent = enemyKills;
-  document.getElementById('stat-pings-w').textContent = totalPingsUsed;
-  document.getElementById('stat-score-w').textContent = score;
-  document.getElementById('screen-win').classList.remove('hidden');
-}
-
-function nextLevel() {
-  initGame();
-  gameState = 'playing';
-  document.getElementById('screen-win').classList.add('hidden');
-}
 
 function update(now) {
   if (gameState !== 'playing') return;
@@ -959,8 +1120,11 @@ function update(now) {
     if (keys['a'] || keys['arrowleft']) dx = -1;
     if (keys['d'] || keys['arrowright']) dx = 1;
     if (dx || dy) {
-      lastDir = { dx: dx || lastDir.dx, dy: dy || lastDir.dy };
-      if (dx && dy) dy = 0; // no diagonal
+      if (dx && dy) dy = 0; // no diagonal movement (but aim can be diagonal)
+      // Snap aim to movement direction
+      for (let i = 0; i < 8; i++) {
+        if (AIM_DIRS[i].dx === dx && AIM_DIRS[i].dy === dy) { player.aimDir = i; break; }
+      }
       movePlayer(dx, dy, now);
     }
   }
@@ -971,6 +1135,15 @@ function update(now) {
     if (pingRechargeTimer >= PING_RECHARGE_TIME) {
       pingRechargeTimer = 0;
       player.pings++;
+    }
+  }
+
+  // Torpedo recharge
+  if (player.torpedoes < MAX_TORPEDOES) {
+    player.torpReloadTimer += 16.67;
+    if (player.torpReloadTimer >= TORPEDO_RELOAD_TIME) {
+      player.torpReloadTimer = 0;
+      player.torpedoes++;
     }
   }
 
@@ -1013,13 +1186,31 @@ function update(now) {
   enemies.forEach(e => {
     if (!e.alive) return;
 
-    // Enemy ping occasionally
-    e.pingTimer += 16.67;
-    if (e.pingTimer > 5000 + Math.random() * 3000) {
-      e.pingTimer = 0;
-      if (Math.random() < 0.4) {
-        doPing(e.x, e.y, true);
+    // Enemy torpedo recharge
+    if (e.torpedoes < MAX_TORPEDOES) {
+      e.torpReloadTimer += 16.67;
+      if (e.torpReloadTimer >= TORPEDO_RELOAD_TIME) {
+        e.torpReloadTimer = 0;
+        e.torpedoes++;
       }
+    }
+
+    // Enemy ping — guaranteed at least every 10s, often sooner
+    e.pingTimer += 16.67;
+    const pingThreshold = 4000 + Math.random() * 2000; // try every 4-6s
+    if (e.pingTimer > pingThreshold) {
+      e.pingTimer = 0;
+      if (Math.random() < 0.6 || e.lastPing > 10000) {
+        doPing(e.x, e.y, true);
+        e.lastPing = 0;
+      }
+    }
+    e.lastPing += 16.67;
+    // Hard cap: must ping after 10 seconds no matter what
+    if (e.lastPing >= 10000) {
+      doPing(e.x, e.y, true);
+      e.lastPing = 0;
+      e.pingTimer = 0;
     }
 
     if (now - e.lastMove < ENEMY_MOVE_DELAY) return;
@@ -1037,13 +1228,16 @@ function update(now) {
 
       // If very close and detected, fire at player
       const dist = Math.abs(e.x - player.x) + Math.abs(e.y - player.y);
-      if (dist < 5 && e.alert > 70) {
-        const fdx = Math.sign(player.x - e.x);
-        const fdy = Math.sign(player.y - e.y);
+      if (dist < 5 && e.alert > 70 && e.torpedoes > 0) {
+        e.torpedoes--;
+        const fdx = player.x - e.x;
+        const fdy = player.y - e.y;
+        const flen = Math.sqrt(fdx * fdx + fdy * fdy) || 1;
         torpedoes.push({
-          x: e.x, y: e.y,
-          dx: fdx || 0, dy: fdy || 0,
-          lastMove: now, fromPlayer: false, alive: true
+          x: e.x + 0.5, y: e.y + 0.5,
+          dx: fdx / flen, dy: fdy / flen,
+          lastMove: now, fromPlayer: false, alive: true,
+          traveled: 0, trail: []
         });
         Audio.torpedo();
       }
@@ -1074,25 +1268,74 @@ function update(now) {
     }
   });
 
-  // Update torpedoes
+  // Update torpedoes (float-based with homing)
   torpedoes.forEach(t => {
     if (!t.alive) return;
     if (now - t.lastMove < TORPEDO_SPEED) return;
     t.lastMove = now;
-    t.x += t.dx;
-    t.y += t.dy;
+    t.traveled++;
 
-    // Out of bounds or wall
-    if (t.y < 0 || t.y >= ROWS || t.x < 0 || t.x >= COLS || world[t.y][t.x] === TILE.WALL) {
+    // Range limit
+    if (t.traveled > TORPEDO_RANGE) {
       t.alive = false;
-      particles.push(...createExplosion(t.x - t.dx, t.y - t.dy, 'small'));
+      particles.push(...createExplosion(Math.round(t.x), Math.round(t.y), 'small'));
       return;
     }
 
-    // Hit enemy
+    // Homing: gently curve toward nearest enemy in path (player torpedoes only)
+    if (t.fromPlayer) {
+      let bestEnemy = null, bestDist = Infinity;
+      enemies.forEach(e => {
+        if (!e.alive) return;
+        const edx = (e.x + 0.5) - t.x, edy = (e.y + 0.5) - t.y;
+        const dist = Math.sqrt(edx * edx + edy * edy);
+        // Only home toward enemies roughly ahead
+        const dot = edx * t.dx + edy * t.dy;
+        if (dot > 0 && dist < 8 && dist < bestDist) {
+          bestDist = dist;
+          bestEnemy = e;
+        }
+      });
+      if (bestEnemy) {
+        const edx = (bestEnemy.x + 0.5) - t.x;
+        const edy = (bestEnemy.y + 0.5) - t.y;
+        const len = Math.sqrt(edx * edx + edy * edy);
+        if (len > 0) {
+          const ndx = edx / len, ndy = edy / len;
+          // Blend current direction with homing direction
+          t.dx = t.dx * (1 - TORPEDO_HOMING_STRENGTH) + ndx * TORPEDO_HOMING_STRENGTH;
+          t.dy = t.dy * (1 - TORPEDO_HOMING_STRENGTH) + ndy * TORPEDO_HOMING_STRENGTH;
+          // Re-normalize
+          const dlen = Math.sqrt(t.dx * t.dx + t.dy * t.dy);
+          if (dlen > 0) { t.dx /= dlen; t.dy /= dlen; }
+        }
+      }
+    }
+
+    // Save trail position
+    if (t.trail) t.trail.push({ x: t.x, y: t.y, age: 0 });
+    if (t.trail && t.trail.length > 6) t.trail.shift();
+
+    // Move
+    t.x += t.dx;
+    t.y += t.dy;
+
+    const gx = Math.floor(t.x), gy = Math.floor(t.y);
+
+    // Out of bounds or wall
+    if (gy < 0 || gy >= ROWS || gx < 0 || gx >= COLS || (world[gy] && world[gy][gx] === TILE.WALL)) {
+      t.alive = false;
+      particles.push(...createExplosion(Math.round(t.x - t.dx), Math.round(t.y - t.dy), 'small'));
+      return;
+    }
+
+    // Hit detection with proximity radius
     if (t.fromPlayer) {
       enemies.forEach(e => {
-        if (e.alive && e.x === t.x && e.y === t.y) {
+        if (!e.alive || !t.alive) return;
+        const edx = (e.x + 0.5) - t.x, edy = (e.y + 0.5) - t.y;
+        const dist = Math.sqrt(edx * edx + edy * edy);
+        if (dist < TORPEDO_HIT_RADIUS) {
           e.alive = false;
           t.alive = false;
           enemyKills++;
@@ -1103,8 +1346,10 @@ function update(now) {
         }
       });
     } else {
-      // Hit player
-      if (t.x === player.x && t.y === player.y) {
+      // Enemy torpedo hits player (also proximity based)
+      const pdx = (player.x + 0.5) - t.x, pdy = (player.y + 0.5) - t.y;
+      const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+      if (pdist < TORPEDO_HIT_RADIUS) {
         player.hull -= 30;
         t.alive = false;
         Audio.hit();
@@ -1122,12 +1367,38 @@ function update(now) {
     p.y += p.vy;
   });
   particles = particles.filter(p => p.life > 0);
+
+  // Wave clear check — all enemies dead?
+  const aliveEnemies = enemies.filter(e => e.alive).length;
+  if (aliveEnemies === 0 && gameState === 'playing') {
+    if (waveClearTimer === 0) {
+      // Just cleared — start countdown
+      waveClearTimer = WAVE_CLEAR_DELAY;
+    }
+    waveClearTimer -= 16.67;
+    if (waveClearTimer <= 0) {
+      waveClearTimer = 0;
+      // Auto-advance: score, level up, spawn next wave (or win)
+      score += 500 + player.hull * 5 + (level + 1) * 50;
+      Audio.win();
+      level++;
+      if (level >= MAX_WAVES) {
+        gameState = 'victory';
+        document.getElementById('stat-kills-v').textContent = enemyKills;
+        document.getElementById('stat-pings-v').textContent = totalPingsUsed;
+        document.getElementById('stat-score-v').textContent = score;
+        document.getElementById('screen-victory').classList.remove('hidden');
+      } else {
+        startNewWave();
+      }
+    }
+  }
 }
 
 function createExplosion(x, y, type) {
   const p = [];
-  const count = type === 'big' ? 15 : type === 'hit' ? 8 : 5;
-  const chars = type === 'hit' ? ['*', '×', '+'] : ['*', '#', '░', '▒', '·'];
+  const count = type === 'big' ? 15 : type === 'hit' ? 8 : type === 'heal' ? 10 : 5;
+  const chars = type === 'hit' ? ['*', '×', '+'] : type === 'heal' ? ['+', '♥', '·', '*'] : ['*', '#', '░', '▒', '·'];
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
     const speed = 0.02 + Math.random() * 0.05;
@@ -1138,7 +1409,7 @@ function createExplosion(x, y, type) {
       char: chars[Math.floor(Math.random() * chars.length)],
       life: 1,
       decay: 0.01 + Math.random() * 0.02,
-      color: type === 'hit' ? 'red' : 'green'
+      color: type === 'hit' ? 'red' : type === 'heal' ? 'cyan' : 'green'
     });
   }
   return p;
@@ -1176,6 +1447,10 @@ function render() {
         ch = CHAR_EXIT;
         const pulse = 0.5 + Math.sin(performance.now() / 300) * 0.5;
         baseColor = `rgba(255, 176, 0, ${vis * (0.5 + pulse * 0.5)})`;
+      } else if (tile === TILE.REPAIR) {
+        ch = CHAR_REPAIR;
+        const pulse = 0.5 + Math.sin(performance.now() / 400) * 0.5;
+        baseColor = `rgba(0, 220, 255, ${vis * (0.4 + pulse * 0.4)})`;
       } else {
         ch = CHAR_EMPTY[(x * 7 + y * 3) % CHAR_EMPTY.length];
         baseColor = `rgba(0, 255, 65, ${vis * 0.2})`;
@@ -1216,18 +1491,49 @@ function render() {
     }
   });
 
-  // Torpedoes
+  // Torpedoes (float position)
   torpedoes.forEach(t => {
     if (!t.alive) return;
+    // Trail
+    if (t.trail) {
+      t.trail.forEach((tp, i) => {
+        tp.age++;
+        const alpha = Math.max(0, 0.5 - tp.age * 0.08);
+        ctx.fillStyle = t.fromPlayer
+          ? `rgba(255, 176, 0, ${alpha})`
+          : `rgba(255, 51, 51, ${alpha})`;
+        ctx.fillText('·', Math.round(tp.x) * CELL_W, Math.round(tp.y) * CELL_H);
+      });
+    }
     ctx.fillStyle = t.fromPlayer ? '#ffb000' : '#ff3333';
-    ctx.fillText(CHAR_TORPEDO, t.x * CELL_W, t.y * CELL_H);
+    ctx.fillText(CHAR_TORPEDO, Math.round(t.x) * CELL_W, Math.round(t.y) * CELL_H);
   });
+
+  // Aim reticle (always visible around player)
+  const aimDir = AIM_DIRS[player.aimDir];
+  const locked = getLockedEnemy();
+  for (let i = 1; i <= 4; i++) {
+    const rx = player.x + aimDir.dx * i;
+    const ry = player.y + aimDir.dy * i;
+    if (ry < 0 || ry >= ROWS || rx < 0 || rx >= COLS) break;
+    if (world[ry] && world[ry][rx] === TILE.WALL) break;
+    const pulse = 0.4 + Math.sin(performance.now() / 200 + i) * 0.2;
+    if (locked) {
+      ctx.fillStyle = `rgba(255, 80, 80, ${pulse + 0.2})`;
+    } else {
+      ctx.fillStyle = `rgba(255, 176, 0, ${pulse})`;
+    }
+    const reticleChar = i === 4 ? (locked ? '×' : '+') : AIM_RETICLE_CHARS[player.aimDir];
+    ctx.fillText(reticleChar, rx * CELL_W, ry * CELL_H);
+  }
 
   // Particles
   particles.forEach(p => {
     const alpha = p.life;
     ctx.fillStyle = p.color === 'red'
       ? `rgba(255, 80, 80, ${alpha})`
+      : p.color === 'cyan'
+      ? `rgba(0, 220, 255, ${alpha})`
       : `rgba(0, 255, 65, ${alpha})`;
     ctx.fillText(p.char, Math.round(p.x) * CELL_W, Math.round(p.y) * CELL_H);
   });
@@ -1239,21 +1545,12 @@ function render() {
     : `rgba(0, 255, 65, ${playerPulse})`;
   ctx.fillText(CHAR_SUB, player.x * CELL_W, player.y * CELL_H);
 
-  // Exit direction indicator (subtle compass)
-  let exitX = 0, exitY = 0;
-  outer: for (let y = 0; y < ROWS; y++)
-    for (let x = 0; x < COLS; x++)
-      if (world[y][x] === TILE.EXIT) { exitX = x; exitY = y; break outer; }
-  const edx = exitX - player.x, edy = exitY - player.y;
-  const angle = Math.atan2(edy, edx);
-  const arrows = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'];
-  const arrowIdx = Math.round((angle + Math.PI) / (Math.PI / 4)) % 8;
-  const compassAlpha = 0.3 + Math.sin(performance.now() / 1000) * 0.1;
-  ctx.fillStyle = `rgba(255, 176, 0, ${compassAlpha})`;
+  // Enemies remaining indicator
+  const remaining = enemies.filter(e => e.alive).length;
   ctx.font = `${CELL_H}px 'Share Tech Mono', monospace`;
-  const dist = Math.sqrt(edx * edx + edy * edy);
-  const distLabel = `${arrows[arrowIdx]} EXIT ${Math.round(dist)}`;
-  ctx.fillText(distLabel, 5, h - 10);
+  ctx.fillStyle = remaining > 0 ? `rgba(255, 80, 80, 0.4)` : `rgba(0, 255, 65, 0.5)`;
+  const enemyLabel = remaining > 0 ? `HOSTILES: ${remaining}` : 'ALL HOSTILES DOWN';
+  ctx.fillText(enemyLabel, 5, h - 10);
 
   // Detection warning
   if (player.detected) {
@@ -1264,12 +1561,29 @@ function render() {
     ctx.fillText(warn, (w - tw) / 2, 10);
   }
 
+  // Wave clear countdown
+  if (waveClearTimer > 0) {
+    const secs = Math.ceil(waveClearTimer / 1000);
+    ctx.font = `${CELL_H + 4}px 'Share Tech Mono', monospace`;
+    const pulse = 0.6 + Math.sin(performance.now() / 300) * 0.4;
+    ctx.fillStyle = `rgba(0, 255, 65, ${pulse})`;
+    const msg = `WAVE ${level + 1} CLEAR — NEXT WAVE IN ${secs}s`;
+    const mw = ctx.measureText(msg).width;
+    ctx.fillText(msg, (w - mw) / 2, 10);
+    // Subtext
+    ctx.font = `${CELL_H - 2}px 'Share Tech Mono', monospace`;
+    ctx.fillStyle = `rgba(0, 220, 255, 0.5)`;
+    const sub = 'HULL REPAIRS AVAILABLE — FIND + KITS';
+    const sw = ctx.measureText(sub).width;
+    ctx.fillText(sub, (w - sw) / 2, 14 + CELL_H);
+  }
+
   // Update HUD
   updateHUD();
 }
 
 function updateHUD() {
-  document.getElementById('hud-depth').textContent = `-${200 + level * 100}m`;
+  document.getElementById('hud-wave').textContent = `${level + 1}/${MAX_WAVES}`;
   document.getElementById('hud-score').textContent = score;
 
   const pingEl = document.getElementById('hud-pings');
@@ -1284,12 +1598,18 @@ function updateHUD() {
   pingEl.textContent = pingStr;
   pingEl.className = player.pings <= 1 ? 'hud-value hud-warn' : 'hud-value';
 
-  // Torpedo HUD
+  // Torpedo HUD with aim direction and reload
   const torpEl = document.getElementById('hud-torp');
-  let torpStr = '';
+  let torpStr = AIM_ARROWS[player.aimDir] + ' ';
   for (let i = 0; i < MAX_TORPEDOES; i++) torpStr += i < player.torpedoes ? '●' : '○';
+  if (player.torpedoes < MAX_TORPEDOES) {
+    const pct = Math.floor((player.torpReloadTimer / TORPEDO_RELOAD_TIME) * 100);
+    torpStr += ` ${pct}%`;
+  }
+  if (getLockedEnemy()) torpStr += ' LOCK';
   torpEl.textContent = torpStr;
-  torpEl.className = player.torpedoes === 0 ? 'hud-value hud-warn' : 'hud-value';
+  torpEl.className = player.torpedoes === 0 ? 'hud-value hud-warn' :
+    getLockedEnemy() ? 'hud-value hud-danger' : 'hud-value';
 
   const hullEl = document.getElementById('hud-hull');
   const hullBars = Math.ceil(player.hull / 10);
