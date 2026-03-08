@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>UNDERTOW</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --green: #00ff41;
+    --green-dim: #00aa2a;
+    --green-dark: #004d15;
+    --amber: #ffb000;
+    --red: #ff3333;
+    --bg: #0a0a0a;
+    --scanline: rgba(0, 255, 65, 0.03);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    color: var(--green);
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  #game-container {
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* CRT scanline overlay */
+  #game-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* CRT vignette */
+  #game-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 101;
+  }
+
+  #hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: clamp(10px, 2.5vw, 14px);
+    border-bottom: 1px solid var(--green-dark);
+    background: rgba(0, 255, 65, 0.02);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  #hud-top span { white-space: nowrap; }
+
+  .hud-label { color: var(--green-dim); }
+  .hud-value { color: var(--green); }
+  .hud-warn { color: var(--amber); }
+  .hud-danger { color: var(--red); }
+
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  #hud-bottom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--green-dark);
+    background: rgba(0, 255, 65, 0.02);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  /* Mobile D-pad and controls */
+  #mobile-controls {
+    display: none;
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  #mobile-controls > * { pointer-events: auto; }
+
+  .dpad {
+    position: absolute;
+    left: 15px;
+    bottom: max(15px, env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: clamp(120px, 28vw, 180px);
+    height: clamp(120px, 28vw, 180px);
+    gap: 3px;
+  }
+
+  .dpad-btn {
+    background: rgba(0, 255, 65, 0.08);
+    border: 1px solid var(--green-dark);
+    color: var(--green);
+    font-size: clamp(16px, 4vw, 24px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+
+  .dpad-btn:active, .dpad-btn.active {
+    background: rgba(0, 255, 65, 0.25);
+    border-color: var(--green);
+  }
+
+  .dpad-center { background: none; border: none; }
+
+  .action-buttons {
+    position: absolute;
+    right: 15px;
+    bottom: max(15px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .action-btn {
+    width: clamp(60px, 15vw, 80px);
+    height: clamp(60px, 15vw, 80px);
+    border-radius: 50%;
+    background: rgba(0, 255, 65, 0.08);
+    border: 2px solid var(--green-dark);
+    color: var(--green);
+    font-family: inherit;
+    font-size: clamp(9px, 2.2vw, 12px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .action-btn:active, .action-btn.active {
+    background: rgba(0, 255, 65, 0.3);
+    border-color: var(--green);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+  }
+
+  .action-btn.torpedo-btn {
+    border-color: rgba(255, 51, 51, 0.4);
+    color: var(--red);
+    background: rgba(255, 51, 51, 0.05);
+  }
+
+  .action-btn.torpedo-btn:active {
+    background: rgba(255, 51, 51, 0.2);
+    border-color: var(--red);
+    box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);
+  }
+
+  /* Screens */
+  .screen-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    z-index: 200;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .screen-overlay.hidden { display: none; }
+
+  .title {
+    font-size: clamp(28px, 8vw, 64px);
+    letter-spacing: 8px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,65,0.3);
+  }
+
+  .subtitle {
+    font-size: clamp(10px, 2.5vw, 16px);
+    color: var(--green-dim);
+    margin-bottom: 30px;
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  .prompt {
+    font-size: clamp(12px, 3vw, 18px);
+    animation: blink 1.2s step-end infinite;
+  }
+
+  .instructions {
+    font-size: clamp(9px, 2vw, 13px);
+    color: var(--green-dark);
+    margin-top: 20px;
+    line-height: 1.8;
+    max-width: 400px;
+  }
+
+  .instructions kbd {
+    color: var(--green-dim);
+    border: 1px solid var(--green-dark);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .stats-line {
+    font-size: clamp(11px, 2.5vw, 15px);
+    margin: 5px 0;
+    color: var(--green-dim);
+  }
+
+  .stats-line .val { color: var(--green); }
+
+  /* Landscape mobile adjustments */
+  @media (max-height: 500px) and (orientation: landscape) {
+    #hud-top { padding: 3px 12px; font-size: 11px; }
+    #hud-bottom { padding: 4px 12px; }
+    .dpad {
+      width: 110px; height: 110px;
+      left: 10px; bottom: 10px;
+    }
+    .action-buttons { right: 10px; bottom: 10px; gap: 6px; }
+    .action-btn { width: 55px; height: 55px; font-size: 9px; }
+    .title { font-size: 32px; margin-bottom: 5px; }
+    .subtitle { font-size: 11px; margin-bottom: 15px; }
+    .instructions { margin-top: 10px; }
+  }
+
+  /* Show mobile controls on touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    #mobile-controls { display: block; }
+    #hud-bottom .desktop-hint { display: none; }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    #mobile-controls { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="game-container">
+  <div id="hud-top">
+    <span><span class="hud-label">DEPTH </span><span class="hud-value" id="hud-depth">-200m</span></span>
+    <span><span class="hud-label">PINGS </span><span class="hud-value" id="hud-pings">5</span></span>
+    <span><span class="hud-label">HULL </span><span class="hud-value" id="hud-hull">███████████</span></span>
+    <span><span class="hud-label">TORP </span><span class="hud-value" id="hud-torp">●●●</span></span>
+    <span><span class="hud-label">SCORE </span><span class="hud-value" id="hud-score">0</span></span>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="c"></canvas>
+  </div>
+
+  <div id="hud-bottom">
+    <span class="hud-label desktop-hint">
+      <kbd>WASD</kbd> MOVE &nbsp; <kbd>SPACE</kbd> PING &nbsp; <kbd>F</kbd> TORPEDO
+    </span>
+  </div>
+
+  <div id="mobile-controls">
+    <div class="dpad">
+      <div></div>
+      <div class="dpad-btn" data-dir="up">W</div>
+      <div></div>
+      <div class="dpad-btn" data-dir="left">A</div>
+      <div class="dpad-center"></div>
+      <div class="dpad-btn" data-dir="right">D</div>
+      <div></div>
+      <div class="dpad-btn" data-dir="down">S</div>
+      <div></div>
+    </div>
+    <div class="action-buttons">
+      <div class="action-btn ping-btn" id="btn-ping">PING</div>
+      <div class="action-btn torpedo-btn" id="btn-torpedo">FIRE</div>
+    </div>
+  </div>
+
+  <!-- Title screen -->
+  <div class="screen-overlay" id="screen-title">
+    <div class="title">UNDERTOW</div>
+    <div class="subtitle">
+      You are blind beneath the waves.<br>
+      Ping to see. But every ping reveals you.
+    </div>
+    <div class="prompt" id="start-prompt">[ TAP OR PRESS ENTER ]</div>
+    <div class="instructions">
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &mdash;
+      <kbd>SPACE</kbd> sonar ping &mdash;
+      <kbd>F</kbd> torpedo<br>
+      Reach the extraction point. Avoid detection.<br>
+      Pings recharge over time. Torpedoes are limited.
+    </div>
+  </div>
+
+  <!-- Game over screen -->
+  <div class="screen-overlay hidden" id="screen-gameover">
+    <div class="title" style="color:var(--red);text-shadow:0 0 20px var(--red)">LOST AT SEA</div>
+    <div class="stats-line">DEPTH REACHED: <span class="val" id="stat-depth">0m</span></div>
+    <div class="stats-line">ENEMIES DESTROYED: <span class="val" id="stat-kills">0</span></div>
+    <div class="stats-line">FINAL SCORE: <span class="val" id="stat-score">0</span></div>
+    <div class="prompt" style="margin-top:25px">[ TAP OR PRESS ENTER ]</div>
+  </div>
+
+  <!-- Win screen -->
+  <div class="screen-overlay hidden" id="screen-win">
+    <div class="title" style="color:var(--amber);text-shadow:0 0 20px var(--amber)">SURFACED</div>
+    <div class="subtitle">You reached the extraction point.</div>
+    <div class="stats-line">ENEMIES DESTROYED: <span class="val" id="stat-kills-w">0</span></div>
+    <div class="stats-line">PINGS USED: <span class="val" id="stat-pings-w">0</span></div>
+    <div class="stats-line">FINAL SCORE: <span class="val" id="stat-score-w">0</span></div>
+    <div class="prompt" style="margin-top:25px">[ TAP OR PRESS ENTER ]</div>
+  </div>
+</div>
+
+<script>
+// ===== AUDIO ENGINE =====
+const Audio = (() => {
+  let ctx;
+  const init = () => {
+    if (ctx) return ctx;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return ctx;
+  };
+
+  const ping = () => {
+    const c = init();
+    const now = c.currentTime;
+    // Sonar ping: two-tone descending
+    [0, 0.08].forEach((delay, i) => {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(i === 0 ? 1400 : 1050, now + delay);
+      osc.frequency.exponentialRampToValueAtTime(i === 0 ? 800 : 600, now + delay + 0.3);
+      gain.gain.setValueAtTime(0.3, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.8);
+      osc.connect(gain).connect(c.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.9);
+    });
+    // Low reverb tail
+    const noise = c.createOscillator();
+    const ng = c.createGain();
+    noise.type = 'sine';
+    noise.frequency.value = 80;
+    ng.gain.setValueAtTime(0.1, now + 0.15);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    noise.connect(ng).connect(c.destination);
+    noise.start(now + 0.15);
+    noise.stop(now + 1.6);
+  };
+
+  const enemyPing = () => {
+    const c = init();
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.5);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    osc.connect(gain).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.7);
+  };
+
+  const torpedo = () => {
+    const c = init();
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.linearRampToValueAtTime(80, now + 0.4);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    osc.connect(gain).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.6);
+  };
+
+  const explosion = () => {
+    const c = init();
+    const now = c.currentTime;
+    // Low boom
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+    g.gain.setValueAtTime(0.4, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    osc.connect(g).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.7);
+    // Noise burst
+    const bufLen = c.sampleRate * 0.3;
+    const buf = c.createBuffer(1, bufLen, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufLen);
+    const src = c.createBufferSource();
+    const ng = c.createGain();
+    src.buffer = buf;
+    ng.gain.setValueAtTime(0.3, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    src.connect(ng).connect(c.destination);
+    src.start(now);
+  };
+
+  const hit = () => {
+    const c = init();
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+    g.gain.setValueAtTime(0.3, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(g).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  };
+
+  const ambient = () => {
+    const c = init();
+    const now = c.currentTime;
+    // Deep ocean hum
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 38;
+    g.gain.value = 0.04;
+    const lfo = c.createOscillator();
+    const lfoG = c.createGain();
+    lfo.frequency.value = 0.1;
+    lfoG.gain.value = 5;
+    lfo.connect(lfoG).connect(osc.frequency);
+    osc.connect(g).connect(c.destination);
+    osc.start(now);
+    lfo.start(now);
+    return { stop: () => { osc.stop(); lfo.stop(); } };
+  };
+
+  const move = () => {
+    const c = init();
+    const now = c.currentTime;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 45;
+    g.gain.setValueAtTime(0.06, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(g).connect(c.destination);
+    osc.start(now);
+    osc.stop(now + 0.12);
+  };
+
+  const win = () => {
+    const c = init();
+    const now = c.currentTime;
+    [440, 554, 659, 880].forEach((f, i) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.2, now + i * 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.6);
+      osc.connect(g).connect(c.destination);
+      osc.start(now + i * 0.15);
+      osc.stop(now + i * 0.15 + 0.7);
+    });
+  };
+
+  return { init, ping, enemyPing, torpedo, explosion, hit, ambient, move, win };
+})();
+
+// ===== GAME ENGINE =====
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Game constants
+const TILE = { EMPTY: 0, WALL: 1, DEEP: 2, EXIT: 3 };
+const CHAR_WALL = ['#', '█', '▓', '▒'];
+const CHAR_DEEP = ['~', '≈', '∽'];
+const CHAR_EMPTY = ['.', ' ', ' ', ' ', ' '];
+const CHAR_SUB = '◆';
+const CHAR_ENEMY = '▼';
+const CHAR_TORPEDO = '•';
+const CHAR_EXIT = '◎';
+
+let COLS, ROWS, CELL_W, CELL_H;
+let gameState = 'title'; // title, playing, gameover, win
+let ambientSound = null;
+
+// Game state
+let world, player, enemies, torpedoes, particles, pings;
+let pingRechargeTimer, totalPingsUsed, enemyKills, score, level;
+let revealMap; // 2D array: visibility (0-1) for each cell
+let alertLevel; // how much enemies know about player position
+
+const MAX_PINGS = 5;
+const PING_RECHARGE_TIME = 4000; // ms
+const PING_RADIUS = 12;
+const PING_EXPAND_SPEED = 0.15; // cells per frame
+const VISIBILITY_DECAY = 0.003;
+const PLAYER_MOVE_DELAY = 150; // ms
+const ENEMY_MOVE_DELAY = 800;
+const TORPEDO_SPEED = 200; // ms per cell
+const MAX_TORPEDOES = 3;
+
+function resize() {
+  const wrap = document.getElementById('canvas-wrap');
+  const dpr = window.devicePixelRatio || 1;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Calculate grid size based on screen
+  CELL_W = Math.max(10, Math.min(18, Math.floor(w / 50)));
+  CELL_H = Math.max(14, Math.min(24, Math.floor(h / 30)));
+  COLS = Math.floor(w / CELL_W);
+  ROWS = Math.floor(h / CELL_H);
+}
+
+// ===== MAP GENERATION =====
+function generateMap() {
+  const map = [];
+  for (let y = 0; y < ROWS; y++) {
+    map[y] = [];
+    for (let x = 0; x < COLS; x++) {
+      map[y][x] = TILE.EMPTY;
+    }
+  }
+
+  // Cave generation using cellular automata
+  // Seed
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (x === 0 || x === COLS - 1 || y === 0 || y === ROWS - 1) {
+        map[y][x] = TILE.WALL;
+      } else if (Math.random() < 0.38) {
+        map[y][x] = TILE.WALL;
+      }
+    }
+  }
+
+  // Iterate
+  for (let iter = 0; iter < 4; iter++) {
+    const next = map.map(r => [...r]);
+    for (let y = 1; y < ROWS - 1; y++) {
+      for (let x = 1; x < COLS - 1; x++) {
+        let walls = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++)
+            if (map[y + dy][x + dx] === TILE.WALL) walls++;
+        next[y][x] = walls >= 5 ? TILE.WALL : TILE.EMPTY;
+      }
+    }
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) map[y][x] = next[y][x];
+  }
+
+  // Add deep water patches
+  for (let i = 0; i < 5; i++) {
+    const cx = Math.floor(Math.random() * (COLS - 10)) + 5;
+    const cy = Math.floor(Math.random() * (ROWS - 6)) + 3;
+    const r = Math.floor(Math.random() * 3) + 2;
+    for (let dy = -r; dy <= r; dy++)
+      for (let dx = -r; dx <= r; dx++) {
+        const nx = cx + dx, ny = cy + dy;
+        if (ny > 0 && ny < ROWS - 1 && nx > 0 && nx < COLS - 1 && map[ny][nx] === TILE.EMPTY) {
+          if (dx * dx + dy * dy <= r * r) map[ny][nx] = TILE.DEEP;
+        }
+      }
+  }
+
+  return map;
+}
+
+function findOpenSpot(map, preferRight) {
+  const attempts = 200;
+  for (let i = 0; i < attempts; i++) {
+    const x = preferRight
+      ? Math.floor(COLS * 0.7 + Math.random() * COLS * 0.25)
+      : Math.floor(Math.random() * COLS * 0.3 + 2);
+    const y = Math.floor(Math.random() * (ROWS - 4)) + 2;
+    if (x > 0 && x < COLS - 1 && y > 0 && y < ROWS - 1 && map[y][x] === TILE.EMPTY) {
+      return { x, y };
+    }
+  }
+  // Fallback: find any open spot
+  for (let y = 2; y < ROWS - 2; y++)
+    for (let x = preferRight ? COLS - 3 : 2; preferRight ? x > 2 : x < COLS - 3; preferRight ? x-- : x++)
+      if (map[y][x] === TILE.EMPTY) return { x, y };
+  return { x: 3, y: 3 };
+}
+
+function initGame() {
+  resize();
+  world = generateMap();
+
+  // Reveal map
+  revealMap = [];
+  for (let y = 0; y < ROWS; y++) {
+    revealMap[y] = [];
+    for (let x = 0; x < COLS; x++) revealMap[y][x] = 0;
+  }
+
+  // Player starts on left
+  const pPos = findOpenSpot(world, false);
+  player = {
+    x: pPos.x, y: pPos.y,
+    hull: 100,
+    pings: MAX_PINGS,
+    torpedoes: MAX_TORPEDOES,
+    lastMove: 0,
+    detected: false,
+    detectedTimer: 0
+  };
+
+  // Reveal around player initially
+  revealArea(player.x, player.y, 3, 1);
+
+  // Exit on right side
+  const ePos = findOpenSpot(world, true);
+  world[ePos.y][ePos.x] = TILE.EXIT;
+
+  // Enemies
+  enemies = [];
+  const numEnemies = Math.min(3 + level, 8);
+  for (let i = 0; i < numEnemies; i++) {
+    let pos;
+    for (let a = 0; a < 100; a++) {
+      const tx = Math.floor(Math.random() * (COLS - 6)) + 3;
+      const ty = Math.floor(Math.random() * (ROWS - 4)) + 2;
+      if (world[ty][tx] === TILE.EMPTY || world[ty][tx] === TILE.DEEP) {
+        const dist = Math.abs(tx - player.x) + Math.abs(ty - player.y);
+        if (dist > 10) { pos = { x: tx, y: ty }; break; }
+      }
+    }
+    if (pos) {
+      enemies.push({
+        x: pos.x, y: pos.y,
+        lastMove: 0,
+        patrol: Math.random() < 0.5 ? 'h' : 'v',
+        patrolDir: 1,
+        alert: 0,
+        alertX: 0, alertY: 0,
+        alive: true,
+        pingTimer: 0,
+        lastPing: 0
+      });
+    }
+  }
+
+  torpedoes = [];
+  particles = [];
+  pings = [];
+  pingRechargeTimer = 0;
+  totalPingsUsed = 0;
+  alertLevel = 0;
+
+  if (!ambientSound) ambientSound = Audio.ambient();
+}
+
+// ===== PING SYSTEM =====
+function revealArea(cx, cy, radius, intensity) {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const nx = cx + dx, ny = cy + dy;
+      if (ny >= 0 && ny < ROWS && nx >= 0 && nx < COLS) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= radius) {
+          const v = intensity * (1 - dist / (radius + 1));
+          revealMap[ny][nx] = Math.min(1, Math.max(revealMap[ny][nx], v));
+        }
+      }
+    }
+  }
+}
+
+function doPing(fromX, fromY, isEnemy) {
+  const ping = {
+    x: fromX, y: fromY,
+    radius: 0,
+    maxRadius: PING_RADIUS + (isEnemy ? -2 : 0),
+    isEnemy,
+    age: 0
+  };
+  pings.push(ping);
+
+  if (!isEnemy) {
+    Audio.ping();
+    totalPingsUsed++;
+    player.pings--;
+    // Alert enemies
+    alertLevel = Math.min(alertLevel + 30, 100);
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      const dist = Math.abs(e.x - fromX) + Math.abs(e.y - fromY);
+      if (dist < PING_RADIUS * 2) {
+        e.alert = Math.min(100, e.alert + (60 - dist));
+        e.alertX = fromX;
+        e.alertY = fromY;
+      }
+    });
+  } else {
+    Audio.enemyPing();
+  }
+}
+
+function fireTorpedo(dx, dy) {
+  if (player.torpedoes <= 0) return;
+  player.torpedoes--;
+  Audio.torpedo();
+  torpedoes.push({
+    x: player.x, y: player.y,
+    dx, dy,
+    lastMove: performance.now(),
+    fromPlayer: true,
+    alive: true
+  });
+  // Firing also reveals position
+  alertLevel = Math.min(alertLevel + 20, 100);
+}
+
+// ===== INPUT =====
+const keys = {};
+let lastDir = { dx: 1, dy: 0 };
+
+document.addEventListener('keydown', e => {
+  if (gameState === 'title') {
+    if (e.key === 'Enter' || e.key === ' ') { startGame(); return; }
+  }
+  if (gameState === 'gameover') {
+    if (e.key === 'Enter' || e.key === ' ') { showTitle(); return; }
+  }
+  if (gameState === 'win') {
+    if (e.key === 'Enter' || e.key === ' ') { nextLevel(); return; }
+  }
+  if (gameState !== 'playing') return;
+
+  keys[e.key.toLowerCase()] = true;
+
+  if (e.key === ' ' || e.key === 'Spacebar') {
+    e.preventDefault();
+    if (player.pings > 0) doPing(player.x, player.y, false);
+  }
+  if (e.key === 'f' || e.key === 'F') {
+    fireTorpedo(lastDir.dx, lastDir.dy);
+  }
+});
+
+document.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+// Mobile input
+function setupMobile() {
+  const dpadBtns = document.querySelectorAll('.dpad-btn');
+  let dpadInterval = null;
+  let activeDir = null;
+
+  const doDir = (dir) => {
+    if (gameState !== 'playing') return;
+    const now = performance.now();
+    if (now - player.lastMove < PLAYER_MOVE_DELAY) return;
+    let dx = 0, dy = 0;
+    if (dir === 'up') dy = -1;
+    if (dir === 'down') dy = 1;
+    if (dir === 'left') dx = -1;
+    if (dir === 'right') dx = 1;
+    if (dx || dy) {
+      lastDir = { dx, dy };
+      movePlayer(dx, dy, now);
+    }
+  };
+
+  dpadBtns.forEach(btn => {
+    const dir = btn.dataset.dir;
+
+    btn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      btn.classList.add('active');
+      activeDir = dir;
+      doDir(dir);
+      clearInterval(dpadInterval);
+      dpadInterval = setInterval(() => doDir(dir), PLAYER_MOVE_DELAY);
+    });
+
+    btn.addEventListener('touchend', e => {
+      e.preventDefault();
+      btn.classList.remove('active');
+      if (activeDir === dir) {
+        clearInterval(dpadInterval);
+        activeDir = null;
+      }
+    });
+
+    btn.addEventListener('touchcancel', e => {
+      btn.classList.remove('active');
+      clearInterval(dpadInterval);
+      activeDir = null;
+    });
+  });
+
+  document.getElementById('btn-ping').addEventListener('touchstart', e => {
+    e.preventDefault();
+    Audio.init();
+    if (gameState === 'title') { startGame(); return; }
+    if (gameState === 'gameover') { showTitle(); return; }
+    if (gameState === 'win') { nextLevel(); return; }
+    if (gameState === 'playing' && player.pings > 0) doPing(player.x, player.y, false);
+  });
+
+  document.getElementById('btn-torpedo').addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (gameState === 'playing') fireTorpedo(lastDir.dx, lastDir.dy);
+  });
+}
+
+// Title screen tap
+document.getElementById('screen-title').addEventListener('click', () => startGame());
+document.getElementById('screen-gameover').addEventListener('click', () => showTitle());
+document.getElementById('screen-win').addEventListener('click', () => nextLevel());
+
+function movePlayer(dx, dy, now) {
+  const nx = player.x + dx, ny = player.y + dy;
+  if (ny < 0 || ny >= ROWS || nx < 0 || nx >= COLS) return;
+  if (world[ny][nx] === TILE.WALL) return;
+
+  player.x = nx;
+  player.y = ny;
+  player.lastMove = now;
+  Audio.move();
+
+  // Reveal immediate surroundings faintly
+  revealArea(nx, ny, 1, 0.3);
+
+  // Check exit
+  if (world[ny][nx] === TILE.EXIT) {
+    winGame();
+  }
+}
+
+// ===== GAME LOOP =====
+function startGame() {
+  Audio.init();
+  level = 0;
+  score = 0;
+  enemyKills = 0;
+  totalPingsUsed = 0;
+  initGame();
+  gameState = 'playing';
+  document.getElementById('screen-title').classList.add('hidden');
+  document.getElementById('screen-gameover').classList.add('hidden');
+  document.getElementById('screen-win').classList.add('hidden');
+}
+
+function showTitle() {
+  gameState = 'title';
+  document.getElementById('screen-title').classList.remove('hidden');
+  document.getElementById('screen-gameover').classList.add('hidden');
+  document.getElementById('screen-win').classList.add('hidden');
+}
+
+function gameOver() {
+  gameState = 'gameover';
+  Audio.explosion();
+  document.getElementById('stat-depth').textContent = `-${200 + level * 100}m`;
+  document.getElementById('stat-kills').textContent = enemyKills;
+  document.getElementById('stat-score').textContent = score;
+  document.getElementById('screen-gameover').classList.remove('hidden');
+}
+
+function winGame() {
+  score += 500 + player.hull * 5;
+  gameState = 'win';
+  Audio.win();
+  level++;
+  document.getElementById('stat-kills-w').textContent = enemyKills;
+  document.getElementById('stat-pings-w').textContent = totalPingsUsed;
+  document.getElementById('stat-score-w').textContent = score;
+  document.getElementById('screen-win').classList.remove('hidden');
+}
+
+function nextLevel() {
+  initGame();
+  gameState = 'playing';
+  document.getElementById('screen-win').classList.add('hidden');
+}
+
+function update(now) {
+  if (gameState !== 'playing') return;
+
+  // Player movement from held keys
+  if (now - player.lastMove >= PLAYER_MOVE_DELAY) {
+    let dx = 0, dy = 0;
+    if (keys['w'] || keys['arrowup']) dy = -1;
+    if (keys['s'] || keys['arrowdown']) dy = 1;
+    if (keys['a'] || keys['arrowleft']) dx = -1;
+    if (keys['d'] || keys['arrowright']) dx = 1;
+    if (dx || dy) {
+      lastDir = { dx: dx || lastDir.dx, dy: dy || lastDir.dy };
+      if (dx && dy) dy = 0; // no diagonal
+      movePlayer(dx, dy, now);
+    }
+  }
+
+  // Ping recharge
+  if (player.pings < MAX_PINGS) {
+    pingRechargeTimer += 16.67;
+    if (pingRechargeTimer >= PING_RECHARGE_TIME) {
+      pingRechargeTimer = 0;
+      player.pings++;
+    }
+  }
+
+  // Alert decay
+  alertLevel = Math.max(0, alertLevel - 0.05);
+  player.detected = alertLevel > 50;
+
+  // Update pings (expand)
+  pings.forEach(p => {
+    p.radius += PING_EXPAND_SPEED;
+    p.age++;
+    if (p.radius <= p.maxRadius) {
+      // Reveal ring
+      const r = Math.floor(p.radius);
+      for (let a = 0; a < 60; a++) {
+        const angle = (a / 60) * Math.PI * 2;
+        const rx = Math.round(p.x + Math.cos(angle) * r);
+        const ry = Math.round(p.y + Math.sin(angle) * r * 0.6); // squish for ASCII aspect
+        if (ry >= 0 && ry < ROWS && rx >= 0 && rx < COLS) {
+          const intensity = 1 - (p.radius / p.maxRadius) * 0.5;
+          revealMap[ry][rx] = Math.min(1, Math.max(revealMap[ry][rx], intensity));
+        }
+      }
+    }
+  });
+  pings = pings.filter(p => p.radius < p.maxRadius + 5);
+
+  // Decay visibility
+  for (let y = 0; y < ROWS; y++)
+    for (let x = 0; x < COLS; x++) {
+      if (revealMap[y][x] > 0) {
+        // Keep immediate player surroundings slightly visible
+        const pdist = Math.abs(x - player.x) + Math.abs(y - player.y);
+        const minVis = pdist <= 1 ? 0.15 : 0;
+        revealMap[y][x] = Math.max(minVis, revealMap[y][x] - VISIBILITY_DECAY);
+      }
+    }
+
+  // Enemy AI
+  enemies.forEach(e => {
+    if (!e.alive) return;
+
+    // Enemy ping occasionally
+    e.pingTimer += 16.67;
+    if (e.pingTimer > 5000 + Math.random() * 3000) {
+      e.pingTimer = 0;
+      if (Math.random() < 0.4) {
+        doPing(e.x, e.y, true);
+      }
+    }
+
+    if (now - e.lastMove < ENEMY_MOVE_DELAY) return;
+    e.lastMove = now;
+
+    let dx = 0, dy = 0;
+
+    if (e.alert > 50) {
+      // Move toward last known player position
+      const tdx = e.alertX - e.x;
+      const tdy = e.alertY - e.y;
+      if (Math.abs(tdx) > Math.abs(tdy)) dx = Math.sign(tdx);
+      else dy = Math.sign(tdy);
+      e.alert -= 2;
+
+      // If very close and detected, fire at player
+      const dist = Math.abs(e.x - player.x) + Math.abs(e.y - player.y);
+      if (dist < 5 && e.alert > 70) {
+        const fdx = Math.sign(player.x - e.x);
+        const fdy = Math.sign(player.y - e.y);
+        torpedoes.push({
+          x: e.x, y: e.y,
+          dx: fdx || 0, dy: fdy || 0,
+          lastMove: now, fromPlayer: false, alive: true
+        });
+        Audio.torpedo();
+      }
+    } else {
+      // Patrol
+      if (e.patrol === 'h') {
+        dx = e.patrolDir;
+      } else {
+        dy = e.patrolDir;
+      }
+    }
+
+    const nx = e.x + dx, ny = e.y + dy;
+    if (ny > 0 && ny < ROWS - 1 && nx > 0 && nx < COLS - 1 &&
+        world[ny][nx] !== TILE.WALL) {
+      e.x = nx;
+      e.y = ny;
+    } else {
+      e.patrolDir *= -1;
+    }
+
+    // Collision with player
+    if (e.x === player.x && e.y === player.y) {
+      player.hull -= 25;
+      Audio.hit();
+      particles.push(...createExplosion(player.x, player.y, 'hit'));
+      if (player.hull <= 0) gameOver();
+    }
+  });
+
+  // Update torpedoes
+  torpedoes.forEach(t => {
+    if (!t.alive) return;
+    if (now - t.lastMove < TORPEDO_SPEED) return;
+    t.lastMove = now;
+    t.x += t.dx;
+    t.y += t.dy;
+
+    // Out of bounds or wall
+    if (t.y < 0 || t.y >= ROWS || t.x < 0 || t.x >= COLS || world[t.y][t.x] === TILE.WALL) {
+      t.alive = false;
+      particles.push(...createExplosion(t.x - t.dx, t.y - t.dy, 'small'));
+      return;
+    }
+
+    // Hit enemy
+    if (t.fromPlayer) {
+      enemies.forEach(e => {
+        if (e.alive && e.x === t.x && e.y === t.y) {
+          e.alive = false;
+          t.alive = false;
+          enemyKills++;
+          score += 100;
+          Audio.explosion();
+          particles.push(...createExplosion(e.x, e.y, 'big'));
+          revealArea(e.x, e.y, 4, 0.8);
+        }
+      });
+    } else {
+      // Hit player
+      if (t.x === player.x && t.y === player.y) {
+        player.hull -= 30;
+        t.alive = false;
+        Audio.hit();
+        particles.push(...createExplosion(player.x, player.y, 'hit'));
+        if (player.hull <= 0) gameOver();
+      }
+    }
+  });
+  torpedoes = torpedoes.filter(t => t.alive);
+
+  // Update particles
+  particles.forEach(p => {
+    p.life -= p.decay;
+    p.x += p.vx;
+    p.y += p.vy;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function createExplosion(x, y, type) {
+  const p = [];
+  const count = type === 'big' ? 15 : type === 'hit' ? 8 : 5;
+  const chars = type === 'hit' ? ['*', '×', '+'] : ['*', '#', '░', '▒', '·'];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 0.02 + Math.random() * 0.05;
+    p.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed * 0.6,
+      char: chars[Math.floor(Math.random() * chars.length)],
+      life: 1,
+      decay: 0.01 + Math.random() * 0.02,
+      color: type === 'hit' ? 'red' : 'green'
+    });
+  }
+  return p;
+}
+
+// ===== RENDERING =====
+function render() {
+  const w = canvas.width / (window.devicePixelRatio || 1);
+  const h = canvas.height / (window.devicePixelRatio || 1);
+
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, w, h);
+
+  if (gameState !== 'playing') return;
+
+  ctx.font = `${CELL_H - 2}px 'Share Tech Mono', monospace`;
+  ctx.textBaseline = 'top';
+
+  // Render map
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const vis = revealMap[y] ? revealMap[y][x] || 0 : 0;
+      if (vis < 0.01) continue;
+
+      const tile = world[y][x];
+      let ch, baseColor;
+
+      if (tile === TILE.WALL) {
+        ch = CHAR_WALL[Math.floor(vis * 3)];
+        baseColor = `rgba(0, 255, 65, ${vis * 0.8})`;
+      } else if (tile === TILE.DEEP) {
+        ch = CHAR_DEEP[(x + y) % 3];
+        baseColor = `rgba(0, 120, 255, ${vis * 0.6})`;
+      } else if (tile === TILE.EXIT) {
+        ch = CHAR_EXIT;
+        const pulse = 0.5 + Math.sin(performance.now() / 300) * 0.5;
+        baseColor = `rgba(255, 176, 0, ${vis * (0.5 + pulse * 0.5)})`;
+      } else {
+        ch = CHAR_EMPTY[(x * 7 + y * 3) % CHAR_EMPTY.length];
+        baseColor = `rgba(0, 255, 65, ${vis * 0.2})`;
+      }
+
+      ctx.fillStyle = baseColor;
+      ctx.fillText(ch, x * CELL_W, y * CELL_H);
+    }
+  }
+
+  // Ping ripples
+  pings.forEach(p => {
+    const r = p.radius;
+    const alpha = Math.max(0, 1 - p.age / 60);
+    if (alpha <= 0) return;
+
+    for (let a = 0; a < 80; a++) {
+      const angle = (a / 80) * Math.PI * 2;
+      const rx = Math.round(p.x + Math.cos(angle) * r);
+      const ry = Math.round(p.y + Math.sin(angle) * r * 0.55);
+      if (ry >= 0 && ry < ROWS && rx >= 0 && rx < COLS) {
+        const rippleChar = a % 4 === 0 ? '·' : a % 4 === 1 ? '.' : a % 4 === 2 ? '°' : '·';
+        ctx.fillStyle = p.isEnemy
+          ? `rgba(255, 100, 100, ${alpha * 0.6})`
+          : `rgba(0, 255, 65, ${alpha * 0.7})`;
+        ctx.fillText(rippleChar, rx * CELL_W, ry * CELL_H);
+      }
+    }
+  });
+
+  // Enemies (only visible if revealed)
+  enemies.forEach(e => {
+    if (!e.alive) return;
+    const vis = revealMap[e.y] ? revealMap[e.y][e.x] || 0 : 0;
+    if (vis > 0.1) {
+      ctx.fillStyle = `rgba(255, 51, 51, ${vis})`;
+      ctx.fillText(CHAR_ENEMY, e.x * CELL_W, e.y * CELL_H);
+    }
+  });
+
+  // Torpedoes
+  torpedoes.forEach(t => {
+    if (!t.alive) return;
+    ctx.fillStyle = t.fromPlayer ? '#ffb000' : '#ff3333';
+    ctx.fillText(CHAR_TORPEDO, t.x * CELL_W, t.y * CELL_H);
+  });
+
+  // Particles
+  particles.forEach(p => {
+    const alpha = p.life;
+    ctx.fillStyle = p.color === 'red'
+      ? `rgba(255, 80, 80, ${alpha})`
+      : `rgba(0, 255, 65, ${alpha})`;
+    ctx.fillText(p.char, Math.round(p.x) * CELL_W, Math.round(p.y) * CELL_H);
+  });
+
+  // Player (always visible)
+  const playerPulse = 0.7 + Math.sin(performance.now() / 500) * 0.3;
+  ctx.fillStyle = player.detected
+    ? `rgba(255, ${Math.floor(176 * playerPulse)}, 0, 1)`
+    : `rgba(0, 255, 65, ${playerPulse})`;
+  ctx.fillText(CHAR_SUB, player.x * CELL_W, player.y * CELL_H);
+
+  // Exit direction indicator (subtle compass)
+  let exitX = 0, exitY = 0;
+  outer: for (let y = 0; y < ROWS; y++)
+    for (let x = 0; x < COLS; x++)
+      if (world[y][x] === TILE.EXIT) { exitX = x; exitY = y; break outer; }
+  const edx = exitX - player.x, edy = exitY - player.y;
+  const angle = Math.atan2(edy, edx);
+  const arrows = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'];
+  const arrowIdx = Math.round((angle + Math.PI) / (Math.PI / 4)) % 8;
+  const compassAlpha = 0.3 + Math.sin(performance.now() / 1000) * 0.1;
+  ctx.fillStyle = `rgba(255, 176, 0, ${compassAlpha})`;
+  ctx.font = `${CELL_H}px 'Share Tech Mono', monospace`;
+  const dist = Math.sqrt(edx * edx + edy * edy);
+  const distLabel = `${arrows[arrowIdx]} EXIT ${Math.round(dist)}`;
+  ctx.fillText(distLabel, 5, h - 10);
+
+  // Detection warning
+  if (player.detected) {
+    ctx.fillStyle = `rgba(255, 51, 51, ${0.3 + Math.sin(performance.now() / 200) * 0.3})`;
+    ctx.font = `${CELL_H + 2}px 'Share Tech Mono', monospace`;
+    const warn = '! DETECTED !';
+    const tw = ctx.measureText(warn).width;
+    ctx.fillText(warn, (w - tw) / 2, 10);
+  }
+
+  // Update HUD
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('hud-depth').textContent = `-${200 + level * 100}m`;
+  document.getElementById('hud-score').textContent = score;
+
+  const pingEl = document.getElementById('hud-pings');
+  let pingStr = '';
+  for (let i = 0; i < MAX_PINGS; i++) {
+    pingStr += i < player.pings ? '●' : '○';
+  }
+  if (player.pings < MAX_PINGS) {
+    const pct = Math.floor((pingRechargeTimer / PING_RECHARGE_TIME) * 100);
+    pingStr += ` ${pct}%`;
+  }
+  pingEl.textContent = pingStr;
+  pingEl.className = player.pings <= 1 ? 'hud-value hud-warn' : 'hud-value';
+
+  // Torpedo HUD
+  const torpEl = document.getElementById('hud-torp');
+  let torpStr = '';
+  for (let i = 0; i < MAX_TORPEDOES; i++) torpStr += i < player.torpedoes ? '●' : '○';
+  torpEl.textContent = torpStr;
+  torpEl.className = player.torpedoes === 0 ? 'hud-value hud-warn' : 'hud-value';
+
+  const hullEl = document.getElementById('hud-hull');
+  const hullBars = Math.ceil(player.hull / 10);
+  hullEl.textContent = '█'.repeat(hullBars) + '░'.repeat(10 - hullBars);
+  hullEl.className = player.hull <= 30 ? 'hud-value hud-danger' : player.hull <= 60 ? 'hud-value hud-warn' : 'hud-value';
+}
+
+// ===== MAIN LOOP =====
+function loop(now) {
+  update(now);
+  render();
+  requestAnimationFrame(loop);
+}
+
+// ===== INIT =====
+window.addEventListener('resize', () => {
+  const oldCols = COLS, oldRows = ROWS;
+  resize();
+  // Only regenerate if grid dimensions actually changed significantly during play
+  if (gameState === 'playing' && (Math.abs(COLS - oldCols) > 5 || Math.abs(ROWS - oldRows) > 3)) {
+    initGame();
+  }
+});
+
+resize();
+setupMobile();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
